@@ -27,6 +27,8 @@ const HomePage = () => {
     description: "",
     priority: "",
   });
+  const [editedTasks, setEditedTasks] = useState({});
+
 
   const priorityList = ["High", "Medium", "Low"];
   const statusList = ["Pending", "Completed"];
@@ -54,9 +56,16 @@ const HomePage = () => {
   //? Change Handler (For Editing of Existing Task)
   const handleTaskChange = (e, id) => {
     const { name, value } = e.target;
-    setTasks((prevTasks) =>
-      prevTasks.map((t) => (t._id === id ? { ...t, [name]: value } : t))
-    );
+    // setTasks((prevTasks) =>
+    //   prevTasks.map((t) => (t._id === id ? { ...t, [name]: value } : t))
+    // );
+    setEditedTasks((prev) => ({
+    ...prev,
+    [id]: {
+      ...prev[id],
+      [name]: value,
+    },
+  }));
   };
 
   //? Handle Delete
@@ -73,11 +82,22 @@ const HomePage = () => {
   //? Handle Update
   const handleUpdate = async (id) => {
     setLoader(true);
-    const updatedTask = tasks.find((t) => t._id === id);
+    // const updatedTask = tasks.find((t) => t._id === id);
+    const updatedTask = {
+    ...tasks.find((t) => t._id === id),
+    ...editedTasks[id],
+  };
+
     const result = await updateTasksFunction(id, updatedTask);
     if (result.status === 200) {
       toast.success(result.data.message);
       GetTasksFunction();
+
+      setEditedTasks((prev) => {
+      const copy = { ...prev };
+      delete copy[id];
+      return copy;
+    });
     } else toast.error(result.response.data.message);
     setLoader(false);
   };
@@ -97,6 +117,7 @@ const HomePage = () => {
     if (result.status === 200) {
       toast.success(result.data.message);
       GetTasksFunction();
+      setDropdown(!dropdown);
       setTask({ title: "", description: "", priority: "" });
     } else {
       toast.error(result.response.data.message);
@@ -270,7 +291,8 @@ const HomePage = () => {
                     <input
                       type="text"
                       name="title"
-                      value={item.title}
+                      // value={item.title}
+                      value={editedTasks[item._id]?.title ?? item.title}
                       onChange={(e) => handleTaskChange(e, item._id)}
                     />
                   </td>
@@ -279,7 +301,8 @@ const HomePage = () => {
                     <input
                       type="text"
                       name="description"
-                      value={item.description}
+                      // value={item.description}
+                      value={editedTasks[item._id]?.description ?? item.description}
                       onChange={(e) => handleTaskChange(e, item._id)}
                     />
                   </td>
@@ -287,7 +310,8 @@ const HomePage = () => {
                     {/* Priority Dropdown */}
                     <select
                       name="priority"
-                      value={item.priority}
+                      // value={item.priority}
+                      value={editedTasks[item._id]?.priority ?? item.priority}
                       onChange={(e) => handleTaskChange(e, item._id)}
                     >
                       {priorityList.map((p) => (
@@ -301,7 +325,8 @@ const HomePage = () => {
                     {/* Status Dropdown */}
                     <select
                       name="status"
-                      value={item.status}
+                      // value={item.status}
+                      value={editedTasks[item._id]?.status ?? item.status}
                       onChange={(e) => handleTaskChange(e, item._id)}
                     >
                       {statusList.map((s) => (
